@@ -11,6 +11,7 @@ class Graph {
 private:         
     int N = 1e6;
     vector<vector<pci> > adj;
+    vector<vector<pci> > adjDFA;
     int nfaBegin;
     int nfaEnd; 
     set<char> abc;
@@ -127,9 +128,62 @@ private:
         return true;
     }
 
+    set<int> move(set<int> state, char letter){
+        set<int> mve;
+        for(auto e: state){
+            for(auto n: adj[e]){
+                if(n.first == letter){
+                    mve.insert(n.second);
+                }
+            }
+        }
+
+        return mve;
+    }
+
+    set<int> closure(set<int> state){
+        set<int> cre;
+        map<int, bool> visited;
+
+        for(auto e: state){
+            //bfs
+            queue<int> q;
+
+            visited[e]=true;
+            q.push(e);
+
+
+            while(!q.empty()){
+                int node = q.front();
+                q.pop();
+
+                // process node
+                cre.insert(node);
+
+                for(auto e: adj[node]){
+                    int nd = e.second;
+                    if(!visited[nd] && e.first == '#'){
+                        visited[nd]=true;
+                        q.push(nd);
+                    }
+                }
+            }
+
+        }
+        
+        return cre;
+    }
+
+
+
+    bool buildDFA(){
+
+    }
+
 public: 
     Graph(set<char> abec, string exp) {
         this->adj = vector<vector<pci>>(N);
+        this->adjDFA = vector<vector<pci>>(N);
         this->nfaBegin = -1;
         this->nfaEnd = -1;
         this->abc = abec;
