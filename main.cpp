@@ -1,7 +1,6 @@
 #include <iostream> 
 #include <bits/stdc++.h>
 
-#pragma once
 #include "StringManagment.cpp"
 #include "Graph.cpp"
 
@@ -11,12 +10,14 @@ int main(){
     StringManagment manager;
 
     string abc, arg; 
+    cout << "Ingrese su abecedario: ";
     cin >> abc; 
     if(!manager.mapeo(abc)){
         cout << "Existe un error en el abecedario, no puedes agregar '(, ), +, *, ., |, #' ";
         return 0;
     }
 
+    cout << "Ingrese su expresión: ";
     cin >> arg;
     arg = manager.polish(arg);
     cout << arg << endl;
@@ -27,6 +28,6 @@ int main(){
     if(!gr.buildGraphs())
         return 0;
     
-    cout << "NFA: ";
+    cout << "\nNFA: ";
     gr.bfs();
 }
