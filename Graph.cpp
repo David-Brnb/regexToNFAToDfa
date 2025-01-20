@@ -4,7 +4,6 @@
 using namespace std;
 typedef pair<char, int> pci;
 
-#pragma once
 #ifndef GRAPH
 #define GRAPH
 
@@ -15,48 +14,9 @@ private:
     int nfaBegin;
     int nfaEnd; 
     set<char> abc;
+    string polak;
 
-public: 
-    Graph(set<char> abec) {
-        this->adj = vector<vector<pci>>(N);
-        this->nfaBegin = -1;
-        this->nfaEnd = -1;
-        this->abc = abec;
-    }
-
-    void bfs(){
-        vector<bool> visited(nfaEnd+10, false);
-        cout << endl;
-        queue<int> q;
-        if(nfaBegin==-1){
-            nfaBegin = 0;
-        } 
-
-        visited[nfaBegin]=true;
-        q.push(nfaBegin);
-
-
-        while(!q.empty()){
-            int node = q.front();
-            q.pop();
-
-            // process node
-            cout << node << ": ";
-
-            for(auto e: adj[node]){
-                cout << "{ " << e.first << " , " << e.second << " } ";
-                int nd = e.second;
-                if(!visited[nd]){
-                    visited[nd]=true;
-                    q.push(nd);
-                }
-            }
-            cout << endl;
-        }
-
-    }
-
-    bool buildNFA(string polak){
+    bool buildNFA(){
         int last_used_node = 0;
         int last_used_at = 0;
         vector<int> bgg(N, -1);
@@ -154,7 +114,6 @@ public:
                 }
 
             }
-            cout << polak[i] << " ";
         }
 
         if(sti.empty())
@@ -166,6 +125,56 @@ public:
         nfaEnd = endg[at];
 
         return true;
+    }
+
+public: 
+    Graph(set<char> abec, string exp) {
+        this->adj = vector<vector<pci>>(N);
+        this->nfaBegin = -1;
+        this->nfaEnd = -1;
+        this->abc = abec;
+        this->polak = exp;
+    }
+
+    bool buildGraphs(){
+        if(!buildNFA()){
+            cout << "NFA building failed" << endl;
+            return false;
+        }
+
+        return true;
+    }
+
+    void bfs(){
+        vector<bool> visited(nfaEnd+10, false);
+        cout << endl;
+        queue<int> q;
+        if(nfaBegin==-1){
+            nfaBegin = 0;
+        } 
+
+        visited[nfaBegin]=true;
+        q.push(nfaBegin);
+
+
+        while(!q.empty()){
+            int node = q.front();
+            q.pop();
+
+            // process node
+            cout << node << ": ";
+
+            for(auto e: adj[node]){
+                cout << "{ " << e.first << " , " << e.second << " } ";
+                int nd = e.second;
+                if(!visited[nd]){
+                    visited[nd]=true;
+                    q.push(nd);
+                }
+            }
+            cout << endl;
+        }
+
     }
 
 
