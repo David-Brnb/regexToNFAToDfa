@@ -30,4 +30,7 @@ int main(){
     
     cout << "\nNFA: ";
     gr.bfs();
+
+    cout << "\nDFA: ";
+    gr.printDFA();
 }

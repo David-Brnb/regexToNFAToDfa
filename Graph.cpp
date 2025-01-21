@@ -14,6 +14,7 @@ private:
     vector<vector<pci> > adjDFA;
     int nfaBegin;
     int nfaEnd; 
+    int last_used;
     set<char> abc;
     string polak;
 
@@ -170,14 +171,54 @@ private:
             }
 
         }
-        
+
         return cre;
     }
 
 
 
     bool buildDFA(){
+        map<set<int>, int> mapi;
+        map<int, set<int>> ipam;
+        set<int> curr;
+        queue<int> q;
 
+        curr.insert(nfaBegin);
+        curr = closure(curr);
+
+        mapi[curr]=last_used;
+        ipam[last_used] = curr;
+        q.push(last_used);
+        last_used++;
+
+        while(!q.empty()){
+            int n = q.front();
+            q.pop();
+            curr = ipam[n];
+            set<int> st;
+            for(auto let: abc){
+                st = move(curr, let);
+                // aqui podemos omitir el closure si guardamos los sets que entran y el resultado;
+                st = closure(st);
+
+                if(st.empty())
+                    continue;
+
+                if(mapi[st]!=0){
+                    adjDFA[n].push_back(pci(let, mapi[st]));
+
+                } else {
+                    mapi[st]=last_used;
+                    ipam[last_used]=st;
+                    adjDFA[n].push_back(pci(let, last_used));
+                    q.push(last_used);
+                    last_used++;
+                }
+
+            }
+        }
+
+        return true;
     }
 
 public: 
@@ -186,6 +227,7 @@ public:
         this->adjDFA = vector<vector<pci>>(N);
         this->nfaBegin = -1;
         this->nfaEnd = -1;
+        this->last_used = 1;
         this->abc = abec;
         this->polak = exp;
     }
@@ -193,6 +235,11 @@ public:
     bool buildGraphs(){
         if(!buildNFA()){
             cout << "NFA building failed" << endl;
+            return false;
+        }
+
+        if(!buildDFA()){
+            cout << "DFA building failed" << endl;
             return false;
         }
 
@@ -229,6 +276,20 @@ public:
             cout << endl;
         }
 
+    }
+
+    void printDFA(){
+        cout << endl;
+        for(int i=1; i<last_used; i++){
+            cout << char(i+64) << " => [";
+            int j=0; 
+            for(auto e: adjDFA[i]){
+                if(j!=0) printf(", ");
+                printf("('%c', '%c')", char(e.second+64), e.first);
+                j++;
+            }
+            cout << "]" << endl;
+        }
     }
 
 
