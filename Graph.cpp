@@ -271,18 +271,21 @@ public:
             q.pop();
 
             // process node
-            if(nfaEnd != node) cout << node << ": ";
+            if(nfaEnd != node) cout << node << " => [";
 
+            int j=0;
             for(auto e: adj[node]){
-                cout << "{ " << e.first << " , " << e.second << " } ";
+                if(j!=0) printf(", ");
+                cout << "(" << e.second << ", '"<< e.first <<"')";
                 int nd = e.second;
                 if(!visited[nd]){
                     visited[nd]=true;
                     q.push(nd);
                 }
+                j++;
             }
 
-            if(!q.empty()) cout << endl;
+            if(!q.empty()) cout << "]"<< endl;
         }
 
         cout << "Accepting state: " << nfaEnd << endl;
