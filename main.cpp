@@ -10,14 +10,14 @@ int main(){
     StringManagment manager;
 
     string abc, arg; 
-    cout << "Ingrese su abecedario: ";
+    cout << "Alphabet: ";
     cin >> abc; 
     if(!manager.mapeo(abc)){
-        cout << "Existe un error en el abecedario, no puedes agregar '(, ), +, *, ., |, #' ";
+        cout << "Theres an error in the alphabet, it shouldn't contain '(, ), +, *, ., |, #' ";
         return 0;
     }
 
-    cout << "Ingrese su expresión: ";
+    cout << "Regex: ";
     cin >> arg;
     arg = manager.polish(arg);
     cout << arg << endl;

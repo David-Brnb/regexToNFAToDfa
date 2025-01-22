@@ -16,6 +16,7 @@ private:
     int nfaEnd; 
     int last_used;
     set<char> abc;
+    set<int> accepted;
     string polak;
 
     bool buildNFA(){
@@ -180,6 +181,7 @@ private:
     bool buildDFA(){
         map<set<int>, int> mapi;
         map<int, set<int>> ipam;
+        accepted.clear();
         set<int> curr;
         queue<int> q;
 
@@ -216,6 +218,12 @@ private:
                 }
 
             }
+        }
+
+        // registramos todos los estados finales
+        for(auto e: ipam){
+            if(e.second.count(nfaEnd)>0)
+                accepted.insert(e.first);
         }
 
         return true;
@@ -263,7 +271,7 @@ public:
             q.pop();
 
             // process node
-            cout << node << ": ";
+            if(nfaEnd != node) cout << node << ": ";
 
             for(auto e: adj[node]){
                 cout << "{ " << e.first << " , " << e.second << " } ";
@@ -273,8 +281,11 @@ public:
                     q.push(nd);
                 }
             }
-            cout << endl;
+
+            if(!q.empty()) cout << endl;
         }
+
+        cout << "Accepting state: " << nfaEnd << endl;
 
     }
 
@@ -290,6 +301,17 @@ public:
             }
             cout << "]" << endl;
         }
+
+        cout <<"Accepting states: [";
+        int j=0;
+        for(auto e: accepted){
+            if(j!=0) printf(", ");
+            printf("'%c'", char(e+64));
+            j++;
+        }
+        cout << "]" << endl;
+
+
     }
 
 
