@@ -285,7 +285,7 @@ public:
                 j++;
             }
 
-            if(!q.empty()) cout << "]"<< endl;
+            if(nfaEnd != node) cout << "]"<< endl;
         }
 
         cout << "Accepting state: " << nfaEnd << endl;
