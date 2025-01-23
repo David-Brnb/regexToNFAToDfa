@@ -8,54 +8,50 @@ typedef pair<char, int> pci;
 #define GRAPH
 
 /*
-    Esta clase se encarga de la contruccion de los autmatas tanto deterministico como el no deterministico, 
-    esto lo hace mediante la declaración de 2 grafos, uno para el NFA y el otro para el DFA. 
+    Esta clase se encarga de la construcción de los autómatas, tanto determinístico como no determinístico. 
+    Para ello, se declara un grafo para el NFA (Automata Finito No Determinista) y otro para el DFA (Automata Finito Determinista).
 */
 class Graph {       
 private:
-    vector<vector<pci> > adj;
-    vector<vector<pci> > adjDFA;
-    map<int, set<int> > closureDP;
-    map<int, bool > closureDPB;
-    set<char> abc;
-    set<int> accepted;
-    int N = 1e6;
-    int nfaBegin;
-    int nfaEnd; 
-    int last_used;
-    string polak;
+    vector<vector<pci> > adj; // Lista de adyacencia para el NFA
+    vector<vector<pci> > adjDFA; // Lista de adyacencia para el DFA
+    map<int, set<int> > closureDP; // Map para almacenar closures calculados
+    map<int, bool > closureDPB; // Map para indicar si un closure ya fue calculado
+    set<char> abc; // Alfabeto del autómata
+    set<int> accepted; // Estados de aceptación del DFA
+    int N = 1e6; // Límite superior para los nodos
+    int nfaBegin; // Nodo inicial del NFA
+    int nfaEnd;  // Nodo final del NFA
+    int last_used; // Último nodo utilizado en la construcción del DFA
+    string polak; // Expresión regular en notación posfija
 
     /*
-        Este metodo se encarga de construir algoritmicamente el NFA, 
-        esto se logra gracias a que como atributo de la clase tenemos 
-        la expresion regular en notación posfija, lo cual nos sirve 
-        ya que solo aplicamos los operadores de expresiones regulares 
-        de manera parecida a los operadores aritmeticos. 
-        Ademas, nos ayudamos de un grafo representado como listas de 
-        adyacencia que nos ayuda a conectar los nuevos nodos, generando
-        nuevos automatas cuando se trata de elementos del alfabeto, o 
-        modificando automatas cuando se trata de operadores. 
-        La complejidad temporal de este método es O(n) amortizada, ya que
-        solo se recorre la expresión, y unicamente se van realizando 
-        operaciones constantes al unir aristas. 
+        Este método construye el NFA (Automata Finito No Determinista) de manera algorítmica.
+        Aprovecha la expresión regular en notación posfija y aplica los operadores de expresiones regulares 
+        de forma similar a los operadores aritméticos. 
+        Utiliza una lista de adyacencia para representar el grafo y manejar la conexión de nodos.
+
+        Complejidad temporal: O(n) amortizada, donde n es el tamaño de la expresión. 
+        Se recorre la expresión de manera lineal y las operaciones son constantes.
     */
     bool buildNFA(){
         int last_used_node = 0;
         int last_used_at = 0;
-        vector<int> bgg(N, -1);
-        vector<int> endg(N, -1);
+        vector<int> bgg(N, -1); // Nodos iniciales de sub-autómatas
+        vector<int> endg(N, -1); // Nodos finales de sub-autómatas
 
-        stack<int> sti;
+        stack<int> sti; // Pila para manejar los estados
 
         for(int i=0; i<polak.size(); i++){
             if(abc.count(polak[i])>0){
+                // Crear un nuevo autómata para el símbolo
                 int newBg = last_used_node, newEnd = last_used_node+1;
                 int currAt = last_used_at;
                 last_used_node += 2;
                 last_used_at += 1;
 
                 if(newBg>=N || newEnd >=N || currAt>=N)
-                    return false;
+                    return false; // Validación de límites
 
                 adj[newBg].push_back(pci(polak[i], newEnd));
 
@@ -151,18 +147,11 @@ private:
     }
 
     /*
-        Este es un metodo axiliar de buildDFA(). 
-        Se encarga de verificar los nodos adyacentes a cierto nodo, 
-        bajo el costo de algun caracter del alfabeto, y regresa un 
-        conjunto conteniendo los nodos adyacentes a los nodos recibidos, 
-        bajo la letra del alfabeto recibida. 
-        La complejidad de este metodo esta acotada por la cantidad del nodos, 
-        y la cantidad de aristas por nodo. 
-        En el peor de los casos, si el grafo fuese completo y se nos dieran 
-        todos los nodos del grafo la complejidad sería O(V*(V-1)), V son los vertices o nodos.
-        No obstante, por la construcción del NFA sabemos que lo maxímo de aristas
-        en uno de nuestros nodos es 3, por ende la complejidad se amortiza a O(3*V), 
-        es decir O(V)
+        Método auxiliar para calcular los estados alcanzables desde un conjunto de nodos 
+        bajo una transición con un carácter específico del alfabeto.
+
+        Complejidad temporal: O(V), donde V es la cantidad de nodos en el NFA. 
+        Esto se debe a que, por construcción, cada nodo tiene un máximo de 3 aristas salientes.
     */
     set<int> move(set<int> state, char letter){
         set<int> mve;
@@ -178,30 +167,22 @@ private:
     }
 
     /*
-        Este es un metodo axiliar de buildDFA(). 
-        Se encarga de verificar el alcance de un nodo a todos los demás nodos 
-        bajo la gráfica, tal que estos nodos esten conectados con epsilon. 
-        Es decir, realiza un bfs desde cada nodo pasado a travez del set que 
-        se tiene como parametro. 
-        La complejidad de este metodo esta acotada por la cantidad del nodos, 
-        y la cantidad de aristas del grafo. 
-        La complejidad para este metodo esta realcionada a la cantidad de bfs realizados
-        desde, en el peor de los casos esta sería del total de nodos, es decir, O(V*(V+E)), 
-        donde V son los vertices o nodos y E las aristas del grafo. 
-        Es decir la complejidad de realizar un bfs desde cada nodo del NFA, 
-        esto lo podemos afirmar gracias a que mediante el uso de Programación Dinámica, 
-        unicamente calculamos una vez el bfs de cada nodo, así nos sea ingresado 2 
-        veces o más el mismo nodo. 
+        Método auxiliar para calcular el cierre epsilon (epsilon-closure) de un conjunto de nodos.
+        Realiza un BFS para incluir todos los nodos alcanzables a través de transiciones epsilon (#).
+
+        Complejidad temporal: O(V * (V + E)), donde V son los nodos y E las aristas del NFA. 
+        Usa programación dinámica para evitar cálculos redundantes, mejorando el rendimiento.
     */
     set<int> closure(set<int> state){
         set<int> result;
 
         for(auto e: state){
-            //bfs
+            // Realizar BFS desde el nodo
             set<int> cre;
             map<int, bool> visited;
 
             if(closureDPB[e]){
+                // Usar closure previamente calculado
                 cre = closureDP[e];
                 for(auto node: cre){
                     result.insert(node);
@@ -243,27 +224,15 @@ private:
 
 
     /*
-        Este metodo se encarga de construir el DFA, haciendo uso de los metodos auxiliares
-        move y closure, asi como del grafo propuesto en el NFA. 
-        Esto lo logramos mediante el mapeo de los estados generados previamente y su 
-        respectivo nodo, ademas de aplicar el algoritmo visto en clase que hacer uso de 
-        una cola, y los metodos move y closure.
-        La complejidad temporal se ve afectada por la cantidad de ciclos que puede tener el 
-        ciclo while de nuestro metodo, y los sub metodos interiores, podemos notar que el maximo
-        de ciclos que puede tener nuestro ciclo while es 2^V, siendo V los vertices del NFA,
-        pues al considerar que por cada estado diferente necesitaremos realizar otro ciclo, y un
-        estado es generado por algun subconjunto de todos los nodos, entonces sabemos que todos los 
-        subconjuntos son 2^n, siendo n el tamaño del conjunto. 
-        Ahora bien, respecto a los metodos interiores, podemos afirmar que el metodo closure tiene la 
-        peor complejidad ya que hace O(V*(V+E)) operaciones en el peor de los casos, donde V son los 
-        vertices o nodos y E las aristas del grafo. 
+        Este método construye el DFA (Automata Finito Determinista) a partir del NFA.
+        Utiliza los métodos auxiliares `move` y `closure`, así como el grafo del NFA.
 
-        al unir estas complejidades obtenemos que la complejidad total en el peor de los casos esta acotada
-        a O(2^v * (V * (V+E))). 
+        Complejidad temporal: O(2^V * (V * (V + E))), donde V son los nodos y E las aristas del NFA. 
+        Esto se debe a que el número máximo de estados posibles en el DFA es 2^V (conjuntos de nodos del NFA).
     */
     bool buildDFA(){
-        map<set<int>, int> mapi;
-        map<int, set<int>> ipam;
+        map<set<int>, int> mapi; // Mapeo de conjuntos de nodos a índices
+        map<int, set<int>> ipam; // Mapeo inverso de índices a conjuntos de nodos
         accepted.clear();
         closureDP.clear();
         closureDPB.clear();
@@ -286,8 +255,7 @@ private:
             for(auto let: abc){
                 st = move(curr, let);
 
-                // si mandamos una entrada antes registrada, esta simplemente se calculara usando closureDP, 
-                // reduciendo asi la complejidad temporal.
+                // Usar cierre calculado previamente si está disponible
                 st = closure(st);
 
                 if(st.empty())
@@ -307,7 +275,7 @@ private:
             }
         }
 
-        // registramos todos los estados finales
+        // Registrar los estados finales
         for(auto e: ipam){
             if(e.second.count(nfaEnd)>0)
                 accepted.insert(e.first);
@@ -317,7 +285,7 @@ private:
     }
 
 public: 
-    // se inicializan las variables a usar dentro del constructor. 
+    // Constructor que inicializa las variables de la clase
     Graph(set<char> abec, string exp) {
         this->adj = vector<vector<pci>>(N);
         this->adjDFA = vector<vector<pci>>(N);
@@ -328,7 +296,7 @@ public:
         this->polak = exp;
     }
 
-    // se construyen las graficas y si falla algo se le hace saber al usuario
+    // Construcción de los autómatas NFA y DFA. Informa si ocurre algún error.
     bool buildGraphs(){
         if(!buildNFA()){
             cout << "NFA building failed" << endl;
@@ -343,9 +311,8 @@ public:
         return true;
     }
 
-    // imprime el nfa realizando un bfs sobre el grafo
-    // este metodo esta acotado por la complejidad del bfs, 
-    // la cual es O(V+E). 
+    // Imprime el NFA realizando un recorrido BFS
+    // Complejidad: O(V + E), donde V son los nodos y E las aristas.
     void bfs(){
         vector<bool> visited(nfaEnd+10, false);
         cout << endl;
@@ -384,10 +351,8 @@ public:
 
     }
 
-    // Este metodo se encarga de imprimir el DFA
-    // La complejidad del metodo esta acotada por la 
-    // cantidad de vertices en el grafo siendo que el 
-    // peor de los casos es O(V*(V-1))
+    // Imprime el DFA
+    // Complejidad: O(V*(V-1)), donde V son los nodos del DFA.
     void printDFA(){
         cout << endl;
         for(int i=1; i<last_used; i++){
