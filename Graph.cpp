@@ -7,18 +7,25 @@ typedef pair<char, int> pci;
 #ifndef GRAPH
 #define GRAPH
 
+/*
+    Esta clase se encarga de la contruccion de los autmatas tanto deterministico como el no deterministico, 
+    esto lo hace mediante la declaración de 2 grafos, uno para el NFA y el otro para el DFA. 
+*/
 class Graph {       
-private:         
-    int N = 1e6;
+private:
     vector<vector<pci> > adj;
     vector<vector<pci> > adjDFA;
+    map<int, set<int> > closureDP;
+    map<int, bool > closureDPB;
+    set<char> abc;
+    set<int> accepted;
+    int N = 1e6;
     int nfaBegin;
     int nfaEnd; 
     int last_used;
-    set<char> abc;
-    set<int> accepted;
     string polak;
 
+    
     bool buildNFA(){
         int last_used_node = 0;
         int last_used_at = 0;
@@ -130,6 +137,7 @@ private:
         return true;
     }
 
+
     set<int> move(set<int> state, char letter){
         set<int> mve;
         for(auto e: state){
@@ -144,13 +152,22 @@ private:
     }
 
     set<int> closure(set<int> state){
-        set<int> cre;
-        map<int, bool> visited;
+        set<int> result;
 
         for(auto e: state){
             //bfs
-            queue<int> q;
+            set<int> cre;
+            map<int, bool> visited;
 
+            if(closureDPB[e]){
+                cre = closureDP[e];
+                for(auto node: cre){
+                    result.insert(node);
+                }
+                continue;
+            } 
+
+            queue<int> q;
             visited[e]=true;
             q.push(e);
 
@@ -171,9 +188,15 @@ private:
                 }
             }
 
-        }
+            closureDPB[e]=true;
+            closureDP[e]=cre;
 
-        return cre;
+            for(auto node: cre){
+                result.insert(node);
+            }
+        }
+        
+        return result;
     }
 
 
@@ -182,6 +205,8 @@ private:
         map<set<int>, int> mapi;
         map<int, set<int>> ipam;
         accepted.clear();
+        closureDP.clear();
+        closureDPB.clear();
         set<int> curr;
         queue<int> q;
 
