@@ -25,7 +25,20 @@ private:
     int last_used;
     string polak;
 
-    
+    /*
+        Este metodo se encarga de construir algoritmicamente el NFA, 
+        esto se logra gracias a que como atributo de la clase tenemos 
+        la expresion regular en notación posfija, lo cual nos sirve 
+        ya que solo aplicamos los operadores de expresiones regulares 
+        de manera parecida a los operadores aritmeticos. 
+        Ademas, nos ayudamos de un grafo representado como listas de 
+        adyacencia que nos ayuda a conectar los nuevos nodos, generando
+        nuevos automatas cuando se trata de elementos del alfabeto, o 
+        modificando automatas cuando se trata de operadores. 
+        La complejidad temporal de este método es O(n) amortizada, ya que
+        solo se recorre la expresión, y unicamente se van realizando 
+        operaciones constantes al unir aristas. 
+    */
     bool buildNFA(){
         int last_used_node = 0;
         int last_used_at = 0;
@@ -137,7 +150,20 @@ private:
         return true;
     }
 
-
+    /*
+        Este es un metodo axiliar de buildDFA(). 
+        Se encarga de verificar los nodos adyacentes a cierto nodo, 
+        bajo el costo de algun caracter del alfabeto, y regresa un 
+        conjunto conteniendo los nodos adyacentes a los nodos recibidos, 
+        bajo la letra del alfabeto recibida. 
+        La complejidad de este metodo esta acotada por la cantidad del nodos, 
+        y la cantidad de aristas por nodo. 
+        En el peor de los casos, si el grafo fuese completo y se nos dieran 
+        todos los nodos del grafo la complejidad sería O(V*(V-1)), V son los vertices o nodos.
+        No obstante, por la construcción del NFA sabemos que lo maxímo de aristas
+        en uno de nuestros nodos es 3, por ende la complejidad se amortiza a O(3*V), 
+        es decir O(V)
+    */
     set<int> move(set<int> state, char letter){
         set<int> mve;
         for(auto e: state){
@@ -151,6 +177,22 @@ private:
         return mve;
     }
 
+    /*
+        Este es un metodo axiliar de buildDFA(). 
+        Se encarga de verificar el alcance de un nodo a todos los demás nodos 
+        bajo la gráfica, tal que estos nodos esten conectados con epsilon. 
+        Es decir, realiza un bfs desde cada nodo pasado a travez del set que 
+        se tiene como parametro. 
+        La complejidad de este metodo esta acotada por la cantidad del nodos, 
+        y la cantidad de aristas del grafo. 
+        La complejidad para este metodo esta realcionada a la cantidad de bfs realizados
+        desde, en el peor de los casos esta sería del total de nodos, es decir, O(V*(V+E)), 
+        donde V son los vertices o nodos y E las aristas del grafo. 
+        Es decir la complejidad de realizar un bfs desde cada nodo del NFA, 
+        esto lo podemos afirmar gracias a que mediante el uso de Programación Dinámica, 
+        unicamente calculamos una vez el bfs de cada nodo, así nos sea ingresado 2 
+        veces o más el mismo nodo. 
+    */
     set<int> closure(set<int> state){
         set<int> result;
 
@@ -200,7 +242,25 @@ private:
     }
 
 
+    /*
+        Este metodo se encarga de construir el DFA, haciendo uso de los metodos auxiliares
+        move y closure, asi como del grafo propuesto en el NFA. 
+        Esto lo logramos mediante el mapeo de los estados generados previamente y su 
+        respectivo nodo, ademas de aplicar el algoritmo visto en clase que hacer uso de 
+        una cola, y los metodos move y closure.
+        La complejidad temporal se ve afectada por la cantidad de ciclos que puede tener el 
+        ciclo while de nuestro metodo, y los sub metodos interiores, podemos notar que el maximo
+        de ciclos que puede tener nuestro ciclo while es 2^V, siendo V los vertices del NFA,
+        pues al considerar que por cada estado diferente necesitaremos realizar otro ciclo, y un
+        estado es generado por algun subconjunto de todos los nodos, entonces sabemos que todos los 
+        subconjuntos son 2^n, siendo n el tamaño del conjunto. 
+        Ahora bien, respecto a los metodos interiores, podemos afirmar que el metodo closure tiene la 
+        peor complejidad ya que hace O(V*(V+E)) operaciones en el peor de los casos, donde V son los 
+        vertices o nodos y E las aristas del grafo. 
 
+        al unir estas complejidades obtenemos que la complejidad total en el peor de los casos esta acotada
+        a O(2^v * (V * (V+E))). 
+    */
     bool buildDFA(){
         map<set<int>, int> mapi;
         map<int, set<int>> ipam;
@@ -225,7 +285,9 @@ private:
             set<int> st;
             for(auto let: abc){
                 st = move(curr, let);
-                // aqui podemos omitir el closure si guardamos los sets que entran y el resultado;
+
+                // si mandamos una entrada antes registrada, esta simplemente se calculara usando closureDP, 
+                // reduciendo asi la complejidad temporal.
                 st = closure(st);
 
                 if(st.empty())
@@ -255,6 +317,7 @@ private:
     }
 
 public: 
+    // se inicializan las variables a usar dentro del constructor. 
     Graph(set<char> abec, string exp) {
         this->adj = vector<vector<pci>>(N);
         this->adjDFA = vector<vector<pci>>(N);
@@ -265,6 +328,7 @@ public:
         this->polak = exp;
     }
 
+    // se construyen las graficas y si falla algo se le hace saber al usuario
     bool buildGraphs(){
         if(!buildNFA()){
             cout << "NFA building failed" << endl;
@@ -279,6 +343,9 @@ public:
         return true;
     }
 
+    // imprime el nfa realizando un bfs sobre el grafo
+    // este metodo esta acotado por la complejidad del bfs, 
+    // la cual es O(V+E). 
     void bfs(){
         vector<bool> visited(nfaEnd+10, false);
         cout << endl;
@@ -317,6 +384,10 @@ public:
 
     }
 
+    // Este metodo se encarga de imprimir el DFA
+    // La complejidad del metodo esta acotada por la 
+    // cantidad de vertices en el grafo siendo que el 
+    // peor de los casos es O(V*(V-1))
     void printDFA(){
         cout << endl;
         for(int i=1; i<last_used; i++){
